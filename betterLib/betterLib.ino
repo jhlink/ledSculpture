@@ -7,6 +7,8 @@
 // need to define DATA_PIN.  For led chipsets that are SPI based (four wires - data, clock,
 // ground, and power), like the LPD8806, define both DATA_PIN and CLOCK_PIN
 #define DATA_PIN 2
+#define PIX_PER_ROW     8
+#define COLUMNS     32
 
 // Define the array of leds
 CRGB leds[NUM_LEDS];
@@ -18,10 +20,22 @@ void setup() {
 	LEDS.setBrightness(84);
 }
 
-void fadeall() { for(int i = 0; i < NUM_LEDS; i++) { leds[i].nscale8(250); } }
 
 void loop() { 
-	static uint8_t hue = 0;
+	static int incTick = 0;
+    static unsigned long pastTime = millis();
+//    static uint8_t hue = 0;
+    if ((millis() - pastTime) > 100) {
+      wave(incTick);
+       fadeToBlack();
+        
+    }
+//    fadeRainbow();
+	incTick++;
+	incTick %= COLUMNS;
+}
+
+void fadeRainbow(uint8_t hue) {
 	Serial.print("x");
 	// First slide the led in one direction
 	for(int i = 0; i < NUM_LEDS; i++) {
@@ -49,4 +63,29 @@ void loop() {
 		// Wait a little bit before we loop around and do it again
 		delay(10);
 	}
+}
+
+
+void fadeall() { 
+	for(int i = 0; i < NUM_LEDS; i++) { 
+		leds[i].nscale8(250); 
+	} 
+}
+
+void fadeToBlack() {
+	for(int i = 0; i < NUM_LEDS; i++) {
+		leds[i].fadeToBlackBy(25);
+	}
+}
+
+void wave(int tick) { 
+    // % 249 is just for error checking. It prevents the below from happening.
+    // 249 + 8 = 257. There exist no pixel with that address. 
+    int startingRow = (tick * PIX_PER_ROW) % 249;
+    
+    for (int i = 0; i < PIX_PER_ROW; i++) {  // position incrementation
+		leds[startingRow + i].setColorCode(CRGB::White);
+    }
+    FastLED.show();
+   	delay(10);
 }
